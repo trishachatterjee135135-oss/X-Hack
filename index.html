@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Mockingbird Workspace</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="auth-modal" class="auth-overlay">
+        <div class="card auth-card">
+            <h2>Access System Control</h2>
+            <p>Register or log in to provision dynamic endpoints.</p>
+            <div class="form-group">
+                <label for="auth-username">Username</label>
+                <input type="text" id="auth-username" placeholder="e.g., Trisha">
+            </div>
+            <button type="button" id="login-btn" class="btn btn-primary">Initialize Session</button>
+        </div>
+    </div>
+    <div id="history-modal" class="auth-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="history-title">
+        <div class="card history-card">
+                <div class="history-header">
+                <div>
+                    <h2 id="history-title">Saved Mock Payloads</h2>
+                    <p>Choose a saved payload to make it the live SDK response.</p>
+                </div>
+                <button type="button" id="close-history-btn" class="btn btn-danger" aria-label="Close history">✕</button>
+            </div>
+            <div id="history-list" class="history-list"></div>
+            <button type="button" id="clear-history-btn" class="btn btn-danger">CLEAR HISTORY</button>
+        </div>
+    </div>
+    <div id="toast-notification" class="toast hidden">SYSTEM TELEMETRY SYNCHRONIZED</div>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-logo" aria-hidden="true">🕊️</span>
+                <div>
+                    <h2>Mockingbird</h2>
+                    <span class="version-tag">v4.0.2</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <button class="nav-item active" data-target="page-dashboard">
+                    <span class="nav-icon" aria-hidden="true">🎛️</span> Dashboard
+                </button>
+                <button class="nav-item" data-target="page-generator">
+                    <span class="nav-icon" aria-hidden="true">⚡</span> Schema Generator
+                </button>
+                <button class="nav-item" data-target="page-sdks">
+                    <span class="nav-icon" aria-hidden="true">📦</span> Client SDKs
+                </button>
+                <button class="nav-item" data-target="page-settings">
+                    <span class="nav-icon" aria-hidden="true">⚙️</span> Settings
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar" aria-hidden="true">T</div>
+                    <div>
+                        <h4>Trisha</h4>
+                        <p>Developer Account</p>
+                    </div>
+                </div>
+                <button type="button" id="logout-btn" class="btn btn-secondary btn-small">LOG OUT</button>
+            </div>
+        </aside>
+
+        <main class="content-viewport">
+            
+            <section id="page-dashboard" class="app-page">
+                <div class="page-header">
+                    <h1>System Dashboard</h1>
+                    <p>Session activity for provisioned payloads and SDK reads.</p>
+                    <button type="button" id="history-btn" class="btn btn-secondary btn-small history-btn">VIEW PAYLOAD HISTORY</button>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>Total Mock Operations</h3>
+                        <p id="total-requests" class="stat-number">0</p>
+                        <span id="request-trend" class="stat-trend stable">No activity this session</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Saved Mock Payloads</h3>
+                        <p id="active-endpoints" class="stat-number">0</p>
+                        <span id="endpoint-status" class="stat-trend stable">No payload provisioned</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Schema Validation Accuracy</h3>
+                        <p id="validation-accuracy" class="stat-number">0%</p>
+                        <span id="validation-status" class="stat-trend stable">Enter record values to validate</span>
+                    </div>
+                </div>
+                <div class="card log-card">
+                    <h3>Recent Mock Operations</h3>
+                    <div id="telemetry-log" class="log-stream">
+                        <div id="no-telemetry" class="log-row">No mock operations recorded yet.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-generator" class="app-page hidden">
+                <div class="workspace-grid">
+                    <section class="card config-section">
+                        <div class="panel-header">
+                            <h2>Endpoint Configuration</h2>
+                        </div>
+                        <div class="config-body">
+                            <div class="form-group flex-col">
+                                <span class="laser-tag">CONTEXT SPECIFICATION / PROMPT</span>
+                                <textarea id="spec-input" placeholder="Paste OpenAPI spec, Postman link, or type a prompt (e.g., 'E-commerce product list with price and stock numbers')"></textarea>
+                                <button type="button" id="parse-spec-btn" class="btn btn-secondary btn-small">⚡ Parse Specification Context</button>
+                            </div>
+                            
+                            <div class="section-divider"><span>MANUAL SELECTION OVERRIDES</span></div>
+
+                            <div class="form-group row-align-custom">
+                                <span class="laser-tag">RECORDS_TO_EXPORT</span>
+                                <input type="number" id="record-count" value="1" min="1" max="50">
+                            </div>
+                            <div class="section-divider"><span>SCHEMA ATTRIBUTES</span></div>
+                            <div id="fields-container" class="fields-grid"></div>
+                            <button type="button" id="add-field-btn" class="btn btn-secondary">+ Add Schema Attribute</button>
+                            <div class="section-divider"><span>INDIVIDUAL RECORD VALUES</span></div>
+                            <div id="record-inputs" class="record-inputs"></div>
+                        </div>
+                        <div class="panel-footer">
+                            <button type="button" id="generate-btn" class="btn btn-primary">⚡ RUN PROVISION ENGINE</button>
+                        </div>
+                    </section>
+
+                    <section class="card preview-section">
+                        <div class="panel-header header-border">
+                            <div class="status-indicator">
+                                <span class="pulse-dot"></span>
+                                <h2>LIVE JSON TELEMETRY STREAM</h2>
+                            </div>
+                            <button id="copy-btn" class="btn btn-text">COPY PAYLOAD</button>
+                        </div>
+                        <div class="terminal-container">
+                            <div id="scan-line" class="scan"></div>
+                            <div class="terminal-window">
+                                <pre><code id="json-output">// System idle. Configure fields and run engine...</code></pre>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="page-sdks" class="app-page hidden">
+                <div class="page-header">
+                    <h1>Automated Client SDK Generator</h1>
+                    <p>Read the latest provisioned payload directly from this browser's local mock data store.</p>
+                </div>
+                <div class="card sdk-card">
+                    <div class="sdk-tabs">
+                        <span class="sdk-tab active">React / TypeScript Client</span>
+                    </div>
+                    <div class="terminal-container">
+                        <div class="terminal-window">
+                            <pre><code id="sdk-output-code" class="sdk-code">// Run provision engine to generate client hooks...</code></pre>
+                        </div>
+                    </div>
+                    <div class="sdk-actions">
+                        <button type="button" id="sdk-read-btn" class="btn btn-secondary">GET LATEST MOCK PAYLOAD</button>
+                        <button type="button" id="sdk-history-btn" class="btn btn-secondary">GET PAYLOAD HISTORY</button>
+                    </div>
+                    <div class="terminal-container sdk-response">
+                        <div class="terminal-window">
+                            <pre><code id="sdk-live-output">// Provision a payload, then run a live SDK read.</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-settings" class="app-page hidden">
+                <div class="page-header">
+                    <h1>Ecosystem Settings</h1>
+                    <p>Configure local sandbox variables, routing proxies, and mock telemetry modes.</p>
+                </div>
+                <div class="card settings-container">
+                    <div class="setting-row">
+                        <div>
+                            <h4>Mock Latency Simulation Delay</h4>
+                            <p>Inject fake network load delays to test production race conditions.</p>
+                        </div>
+                        <select aria-label="Mock Latency Simulation Delay">
+                            <option>No Delay (0ms)</option>
+                            <option selected>Standard Simulation (400ms)</option>
+                            <option>Throttled 3G (2000ms)</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <h4>Telemetry Data Validation Mode</h4>
+                            <p>Flag strict errors if requests deviate from schemas.</p>
+                        </div>
+                        <input type="checkbox" id="validation-mode" checked aria-label="Telemetry Data Validation Mode">
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <audio id="sound-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" preload="auto"></audio>
+    <audio id="sound-beep" src="https://assets.mixkit.co/active_storage/sfx/911/911-84.wav" preload="auto"></audio>
+    <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav" preload="auto"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
